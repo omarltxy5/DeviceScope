@@ -11,7 +11,7 @@ DeviceScope is built w/ a focus of privacy and transperancy:
 - **Language:** [Kotlin](https://kotlinlang.org/)
 - **UI:** [Jetpack Compose](https://developer.android.com/jetpack/compose) (Material 3)
 - **Data Persistence:** [Jetpack DataStore](https://developer.android.com/topic/libraries/architecture/datastore)
-- **Architecture:** 100% Native Android
+- **Architecture:** 100% Native Android with **1** 3rd-party library [RootBeer](https://github.com/scottyab/rootbeer)
 
 - ## Roadmap
 
