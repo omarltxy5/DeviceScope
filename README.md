@@ -28,4 +28,6 @@ DeviceScope is built w/ a focus of privacy and transperancy:
 Distributed under the **GPLv3 License**. See `LICENSE` for more information
 
 **Means phase is in Pre-Alpha
+
+
 *Means phase is in Alpha
