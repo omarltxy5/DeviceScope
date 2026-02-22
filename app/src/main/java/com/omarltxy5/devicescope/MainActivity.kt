@@ -276,7 +276,8 @@ fun InfoScreen() {
     var showLibraries by remember { mutableStateOf(false) }
 
     if (showLibraries) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            // Back Button
             Row(modifier = Modifier
                 .fillMaxWidth()
                 .clickable { showLibraries = false }
@@ -285,6 +286,22 @@ fun InfoScreen() {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(R.string.back_to_info), style = MaterialTheme.typography.labelLarge)
             }
+
+            Text(
+                text = stringResource(R.string.open_source_libraries),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            // The Licenses
+            LicenseCard("Jetpack Compose", "Google", "Apache 2.0")
+            LicenseCard("Material 3", "Google", "Apache 2.0")
+            LicenseCard("DataStore", "Google", "Apache 2.0")
+            LicenseCard("RootBeer", "scottyab", "Apache 2.0")
+            LicenseCard("Kotlin Coroutines", "JetBrains", "Apache 2.0")
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     } else {
         val packageInfo = remember(context) {
@@ -538,5 +555,21 @@ fun SettingsScreen() {
         }
     }
 }
-
+@Composable
+fun LicenseCard(name: String, author: String, license: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(text = name, style = MaterialTheme.typography.titleSmall)
+            Text(text = "By $author", style = MaterialTheme.typography.bodySmall)
+            Text(
+                text = license,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
+    }
+}
 
