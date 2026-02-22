@@ -15,10 +15,10 @@ DeviceScope is built w/ a focus of privacy and transperancy:
 
 - ## Roadmap
 
-- [x] **Phase 1:** Core Logic & Bug Squashing
-- [x] **Phase 2:** Feature Implementation (Device/System Tabs)
-- [x] **Phase 3:** QoL (Haptics, UI Polish)
-- [ ] **Phase 4:** Crucial Functionality (Root Detection, Partition Checker, Play Integrity)
+- [x] **Phase 1:** Core Logic & Bug Squashing**
+- [x] **Phase 2:** Feature Implementation (Device/System Tabs)**
+- [x] **Phase 3:** QoL (Haptics, UI Polish)**
+- [ ] **Phase 4:** Crucial Functionality (Root Detection, Partition Checker, Play Integrity)*
 - [ ] **Phase 5:** Public Release (XDA/F-Droid)
 
 
@@ -26,3 +26,6 @@ DeviceScope is built w/ a focus of privacy and transperancy:
 - ## Licensing
 - 
 Distributed under the **GPLv3 License**. See `LICENSE` for more information
+
+**Means phase is in Pre-Alpha
+*Means phase is in Alpha
