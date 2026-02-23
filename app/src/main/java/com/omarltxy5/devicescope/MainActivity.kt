@@ -77,6 +77,9 @@ import androidx.core.net.toUri
 import com.omarltxy5.devicescope.ui.theme.DeviceScopeTheme
 import com.scottyab.rootbeer.RootBeer
 import kotlinx.coroutines.launch
+import java.io.BufferedReader
+import java.io.File
+import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -635,7 +638,7 @@ class RootInfoProvider(context: Context) {
             "SU Binary" to rootBeer.checkForSuBinary(),
             "KernelSU" to detectKSU(),
             "KSU Next" to detectKSUNext(),
-            "Magisk/SuperSU" to rootBeer.detectRootManagementApps(),
+            "Magisk/SuperSU" to (rootBeer.detectRootManagementApps() || isPkgInstalled("com.topjohnwu.magisk")),
             "BusyBox" to rootBeer.checkForBusyBoxBinary(),
             "RW System" to rootBeer.checkForRWPaths(),
             "Test Keys" to rootBeer.detectTestKeys()
@@ -643,14 +646,17 @@ class RootInfoProvider(context: Context) {
     }
 
     private fun detectKSU(): Boolean {
-        val managerInstalled = isPkgInstalled("me.weishu.kernelsu") || isPkgInstalled("io.github.tiann.kernelsu")
-        val ksuNode = java.io.File("/data/adb/ksud").exists()
-        return managerInstalled || ksuNode
+        val managerInstalled = isPkgInstalled("me.weishu.kernelsu") ||
+                isPkgInstalled("io.github.tiann.kernelsu")
+
+        val ksuBinaryExists = checkBinaryExists("ksud")
+
+        return managerInstalled || ksuBinaryExists
     }
 
     private fun detectKSUNext(): Boolean {
         val nextManager = isPkgInstalled("com.rifsxd.ksunext")
-        val susfsNode = java.io.File("/dev/susfs").exists()
+        val susfsNode = File("/dev/susfs").exists()
         return nextManager || susfsNode
     }
 
@@ -658,8 +664,22 @@ class RootInfoProvider(context: Context) {
         return try {
             pm.getPackageInfo(pkg, 0)
             true
+        } catch (_: PackageManager.NameNotFoundException) {
+            false
+        }
+    }
+
+
+    private fun checkBinaryExists(binaryName: String): Boolean {
+        var process: Process? = null
+        return try {
+            process = Runtime.getRuntime().exec(arrayOf("which", binaryName))
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            reader.readLine() != null
         } catch (_: Exception) {
             false
+        } finally {
+            process?.destroy()
         }
     }
 

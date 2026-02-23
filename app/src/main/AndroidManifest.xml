@@ -26,5 +26,10 @@
             </intent-filter>
         </activity>
     </application>
-
+    <queries>
+        <package android:name="me.weishu.kernelsu" />
+        <package android:name="io.github.tiann.kernelsu" />
+        <package android:name="com.rifsxd.ksunext" />
+        <package android:name="com.topjohnwu.magisk" />
+    </queries>
 </manifest>
