@@ -3,6 +3,7 @@
 package com.omarltxy5.devicescope
 
 import android.content.ClipData
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
@@ -15,6 +16,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,8 +43,10 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SettingsSuggest
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -59,6 +63,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
@@ -70,6 +75,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.omarltxy5.devicescope.ui.theme.DeviceScopeTheme
+import com.scottyab.rootbeer.RootBeer
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -155,12 +161,60 @@ fun AppScreen() {
 
 @Composable
 fun UtilityScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Utility functions will go here")
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = stringResource(R.string.utilities),
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+
+        RootStatusCard()
+
+
     }
 }
+@Composable
+fun RootStatusCard() {
+    val context = LocalContext.current
+    val provider = remember { RootInfoProvider(context) }
 
+    // FIXED: Changed .equals() to .getRootResults()
+    val results = remember { provider.getRootResults() }
+    val overallRooted = remember { provider.isRooted() }
 
+    SectionCard(title = "Root Integrity") {
+        InfoRow(
+            label = "Overall Status",
+            value = if (overallRooted) "Rooted" else "Not Rooted"
+        )
+
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 8.dp),
+            thickness = DividerDefaults.Thickness,
+            color = DividerDefaults.color
+        )
+
+        results.forEach { (name, detected) ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = name, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = if (detected) "FOUND" else "NOT FOUND",
+                    color = if (detected) Color.Red else Color.Green,
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+    }
+}
 @Composable
 fun HomeScreen() {
     val deviceCodename = remember { Build.DEVICE }
@@ -572,4 +626,43 @@ fun LicenseCard(name: String, author: String, license: String) {
         }
     }
 }
+class RootInfoProvider(context: Context) {
+    private val rootBeer = RootBeer(context)
+    private val pm = context.packageManager
 
+    fun getRootResults(): Map<String, Boolean> {
+        return mapOf(
+            "SU Binary" to rootBeer.checkForSuBinary(),
+            "KernelSU" to detectKSU(),
+            "KSU Next" to detectKSUNext(),
+            "Magisk/SuperSU" to rootBeer.detectRootManagementApps(),
+            "BusyBox" to rootBeer.checkForBusyBoxBinary(),
+            "RW System" to rootBeer.checkForRWPaths(),
+            "Test Keys" to rootBeer.detectTestKeys()
+        )
+    }
+
+    private fun detectKSU(): Boolean {
+        val managerInstalled = isPkgInstalled("me.weishu.kernelsu") || isPkgInstalled("io.github.tiann.kernelsu")
+        // Check for common KSU paths or the dev node
+        val ksuNode = java.io.File("/dev/ksu").exists()
+        return managerInstalled || ksuNode
+    }
+
+    private fun detectKSUNext(): Boolean {
+        val nextManager = isPkgInstalled("com.rifsxd.ksunext")
+        val susfsNode = java.io.File("/dev/susfs").exists()
+        return nextManager || susfsNode
+    }
+
+    private fun isPkgInstalled(pkg: String): Boolean {
+        return try {
+            pm.getPackageInfo(pkg, 0)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun isRooted(): Boolean = rootBeer.isRooted || detectKSU() || detectKSUNext()
+}
