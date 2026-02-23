@@ -3,7 +3,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.aboutLibraries.plugin)
 
 }
 
@@ -66,9 +65,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
-    implementation(libs.aboutlibraries.compose)
     implementation("androidx.datastore:datastore-preferences:1.2.0")
     implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation("androidx.compose.material:material-icons-extended:1.x.x")
-
+    implementation("com.scottyab:rootbeer-lib:0.1.1")
 }
