@@ -644,8 +644,7 @@ class RootInfoProvider(context: Context) {
 
     private fun detectKSU(): Boolean {
         val managerInstalled = isPkgInstalled("me.weishu.kernelsu") || isPkgInstalled("io.github.tiann.kernelsu")
-        // Check for common KSU paths or the dev node
-        val ksuNode = java.io.File("/dev/ksu").exists()
+        val ksuNode = java.io.File("/data/adb/ksud").exists()
         return managerInstalled || ksuNode
     }
 
@@ -659,7 +658,7 @@ class RootInfoProvider(context: Context) {
         return try {
             pm.getPackageInfo(pkg, 0)
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
