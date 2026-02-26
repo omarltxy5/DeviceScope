@@ -62,5 +62,10 @@ class Shell {
             process?.destroy()
         } catch (e: Exception) {
         }
+        fun sanitize(line: String): String {
+            return line.replace(
+                Regex("\u001B\\[[;\\d}*[-/]*[@-~]), )),
+                replacement = ""
+        }
     }
 }
