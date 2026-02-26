@@ -48,5 +48,7 @@
     <string name="version_format">%1$s (%2$s)</string>
     <string name="build_type_format">%1$s</string>
     <string name="install_date_format">%1$s</string>
+    <string name="integrated_terminal">Integrated Terminal</string>
+
 
 </resources>
