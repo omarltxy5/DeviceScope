@@ -177,45 +177,9 @@ fun UtilityScreen() {
         )
 
 
-        RootStatusCard()
 
 
-    }
-}
-@Composable
-fun RootStatusCard() {
-    val context = LocalContext.current
-    val provider = remember { RootInfoProvider(context) }
 
-    // FIXED: Changed .equals() to .getRootResults()
-    val results = remember { provider.getRootResults() }
-    val overallRooted = remember { provider.isRooted() }
-
-    SectionCard(title = "Root Integrity") {
-        InfoRow(
-            label = "Overall Status",
-            value = if (overallRooted) "Rooted" else "Not Rooted"
-        )
-
-        HorizontalDivider(
-            modifier = Modifier.padding(vertical = 8.dp),
-            thickness = DividerDefaults.Thickness,
-            color = DividerDefaults.color
-        )
-
-        results.forEach { (name, detected) ->
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = name, style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    text = if (detected) "FOUND" else "NOT FOUND",
-                    color = if (detected) Color.Red else Color.Green,
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
-        }
     }
 }
 @Composable
@@ -628,60 +592,4 @@ fun LicenseCard(name: String, author: String, license: String) {
             )
         }
     }
-}
-class RootInfoProvider(context: Context) {
-    private val rootBeer = RootBeer(context)
-    private val pm = context.packageManager
-
-    fun getRootResults(): Map<String, Boolean> {
-        return mapOf(
-            "SU Binary" to rootBeer.checkForSuBinary(),
-            "KernelSU" to detectKSU(),
-            "KSU Next" to detectKSUNext(),
-            "Magisk/SuperSU" to (rootBeer.detectRootManagementApps() || isPkgInstalled("com.topjohnwu.magisk")),
-            "BusyBox" to rootBeer.checkForBusyBoxBinary(),
-            "RW System" to rootBeer.checkForRWPaths(),
-            "Test Keys" to rootBeer.detectTestKeys()
-        )
-    }
-
-    private fun detectKSU(): Boolean {
-        val managerInstalled = isPkgInstalled("me.weishu.kernelsu") ||
-                isPkgInstalled("io.github.tiann.kernelsu")
-
-        val ksuBinaryExists = checkBinaryExists("ksud")
-
-        return managerInstalled || ksuBinaryExists
-    }
-
-    private fun detectKSUNext(): Boolean {
-        val nextManager = isPkgInstalled("com.rifsxd.ksunext")
-        val susfsNode = File("/dev/susfs").exists()
-        return nextManager || susfsNode
-    }
-
-    private fun isPkgInstalled(pkg: String): Boolean {
-        return try {
-            pm.getPackageInfo(pkg, 0)
-            true
-        } catch (_: PackageManager.NameNotFoundException) {
-            false
-        }
-    }
-
-
-    private fun checkBinaryExists(binaryName: String): Boolean {
-        var process: Process? = null
-        return try {
-            process = Runtime.getRuntime().exec(arrayOf("which", binaryName))
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            reader.readLine() != null
-        } catch (_: Exception) {
-            false
-        } finally {
-            process?.destroy()
-        }
-    }
-
-    fun isRooted(): Boolean = rootBeer.isRooted || detectKSU() || detectKSUNext()
 }
