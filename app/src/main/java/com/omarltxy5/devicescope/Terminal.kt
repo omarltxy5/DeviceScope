@@ -19,7 +19,7 @@ class Shell {
 
             process = Runtime.getRuntime().exec("sh")
 
-            // Setup streams
+
             input = BufferedWriter(OutputStreamWriter(process!!.outputStream))
             output = BufferedReader(InputStreamReader(process!!.inputStream))
 
