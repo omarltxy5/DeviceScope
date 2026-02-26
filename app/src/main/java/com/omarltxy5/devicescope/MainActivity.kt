@@ -13,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -44,6 +45,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -51,6 +53,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,6 +62,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
@@ -79,12 +83,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // 1. Get the theme mode from DataStore and collect it as state.
-            //    It will automatically update when the value in DataStore changes.
+
             val themeMode by ThemePreferences.getTheme(this)
                 .collectAsState(initial = ThemeMode.SYSTEM)
 
-            // 2. Use the collected themeMode to determine if dark theme should be on.
+
             val useDarkTheme = when (themeMode) {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
@@ -92,7 +95,7 @@ class MainActivity : ComponentActivity() {
             }
 
             DeviceScopeTheme(
-                darkTheme = useDarkTheme, dynamicColor = true // You can make this a setting later!
+                darkTheme = useDarkTheme, dynamicColor = true
             ) {
                 AppScreen()
             }
@@ -107,46 +110,54 @@ fun AppScreen() {
     val pagerState = rememberPagerState(pageCount = { 4 })
     val coroutineScope = rememberCoroutineScope()
     val snappySpec = tween<Float>(durationMillis = 200, easing = FastOutSlowInEasing)
+    var showTerminal by remember { mutableStateOf(false) }
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                val items = listOf(
-                    Triple(0, stringResource(R.string.device), Icons.Filled.Menu),
-                    Triple(1, stringResource(R.string.utilities), Icons.Filled.Build),
-                    Triple(2, stringResource(R.string.settings), Icons.Filled.Settings),
-                    Triple(3, stringResource(R.string.info), Icons.Filled.Info)
-                )
-                items.forEach { (index, label, icon) ->
-                    NavigationBarItem(
-                        selected = pagerState.currentPage == index,
-                        onClick = {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(index, animationSpec = snappySpec)
-                            }
-                        },
-                        icon = { Icon(icon, contentDescription = label) },
-                        label = { Text(label) })
+    if (showTerminal) {
+        TerminalView(onBack = { showTerminal = false })
+    } else {
+        Scaffold(
+            bottomBar = {
+                NavigationBar {
+                    val items = listOf(
+                        Triple(0, stringResource(R.string.device), Icons.Filled.Menu),
+                        Triple(1, stringResource(R.string.utilities), Icons.Filled.Build),
+                        Triple(2, stringResource(R.string.settings), Icons.Filled.Settings),
+                        Triple(3, stringResource(R.string.info), Icons.Filled.Info)
+                    )
+                    items.forEach { (index, label, icon) ->
+                        NavigationBarItem(
+                            selected = pagerState.currentPage == index,
+                            onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(
+                                        index,
+                                        animationSpec = snappySpec
+                                    )
+                                }
+                            },
+                            icon = { Icon(icon, contentDescription = label) },
+                            label = { Text(label) })
+                    }
                 }
-            }
-        }) { innerPadding ->
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.Top,
-                beyondViewportPageCount = 1
-            ) { page ->
-                when (page) {
-                    0 -> HomeScreen()
-                    1 -> UtilityScreen()
-                    2 -> SettingsScreen()
-                    3 -> InfoScreen()
+            }) { innerPadding ->
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.Top,
+                    beyondViewportPageCount = 1
+                ) { page ->
+                    when (page) {
+                        0 -> HomeScreen()
+                        1 -> UtilityScreen(onOpenTerminal = { showTerminal = true })
+                        2 -> SettingsScreen()
+                        3 -> InfoScreen()
+                    }
                 }
             }
         }
@@ -154,7 +165,7 @@ fun AppScreen() {
 }
 
 @Composable
-fun UtilityScreen() {
+fun UtilityScreen(onOpenTerminal: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -166,6 +177,34 @@ fun UtilityScreen() {
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 16.dp)
         )
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .clickable { onOpenTerminal() },
+            shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
+            )
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Terminal",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                    Text(
+                        text = "Access the local shell console",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Icon(Icons.Default.Build, contentDescription = null)
+            }
+        }
     }
 }
 @Composable
@@ -283,8 +322,10 @@ fun InfoScreen() {
     var showLibraries by remember { mutableStateOf(false) }
 
     if (showLibraries) {
-        Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            // Back Button
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())) {
+
             Row(modifier = Modifier
                 .fillMaxWidth()
                 .clickable { showLibraries = false }
@@ -301,7 +342,7 @@ fun InfoScreen() {
                 color = MaterialTheme.colorScheme.primary
             )
 
-            // The Licenses
+
             LicenseCard("Jetpack Compose", "Google", "Apache 2.0")
             LicenseCard("Material 3", "Google", "Apache 2.0")
             LicenseCard("DataStore", "Google", "Apache 2.0")
@@ -565,7 +606,9 @@ fun SettingsScreen() {
 @Composable
 fun LicenseCard(name: String, author: String, license: String) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
@@ -575,6 +618,84 @@ fun LicenseCard(name: String, author: String, license: String) {
                 text = license,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.secondary
+            )
+        }
+    }
+}
+@Composable
+fun TerminalView(onBack: () -> Unit) {
+    val shell = remember { Shell() }
+    var outputText by remember { mutableStateOf("Welcome to DeviceScope Terminal\n$ ") }
+    var inputText by remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+
+    DisposableEffect(Unit) {
+        shell.onOutput = { line ->
+            outputText += "$line\n$ "
+        }
+        shell.start()
+        onDispose { shell.stop() }
+    }
+
+    Scaffold(
+        topBar = {
+            Surface(tonalElevation = 3.dp) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        null,
+                        Modifier.clickable { onBack() }
+                    )
+                    Spacer(Modifier.width(16.dp))
+                    Text("Terminal Console", style = MaterialTheme.typography.titleMedium)
+                }
+            }
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .background(
+                    if (isSystemInDarkTheme()) Color(0xFF121212) else Color(
+                        0xFFF5F5F5
+                    )
+                )
+        ) {
+            Box(Modifier
+                .weight(1f)
+                .padding(16.dp)
+                .verticalScroll(scrollState)) {
+                Text(
+                    text = outputText,
+                    color = if (isSystemInDarkTheme()) Color.Green else Color.Black,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            androidx.compose.material3.TextField(
+                value = inputText,
+                onValueChange = { inputText = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Enter command...") },
+                singleLine = true,
+                trailingIcon = {
+                    IconButton(onClick = {
+                        if (inputText.isNotBlank()) {
+                            shell.send(inputText)
+                            outputText += "${inputText}\n"
+                            inputText = ""
+                        }
+                    }) {
+                        Icon(Icons.Default.Build, null)
+                    }
+                }
             )
         }
     }
