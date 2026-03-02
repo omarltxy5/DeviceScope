@@ -19,8 +19,8 @@ android {
         applicationId = "com.omarltxy5.devicescope"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = 2
+        versionName = "0.2 BETA PREVIEW 1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
